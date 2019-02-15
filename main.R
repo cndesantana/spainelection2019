@@ -21,6 +21,7 @@ survey_long <- melt(survey,
                     measure.vars = c("PP", "PSOE", "UP", "Cs", "Vox", "Others.Blank"))
 names(survey_long)[6] <- "Party"
 
+#plot time series of surveys
 p1 <- survey_long %>%
   ggplot(aes(x = dmy(ReleaseDate), y = as.numeric(value), col = Party), size=3) +
   geom_point(stat="identity") +
@@ -37,6 +38,7 @@ png("tiemseries1.png",width=3200,height=1800,res=300)
 print(p1)
 dev.off()
 
+#plot time series of surveys along last 5 months
 p2 <- survey_long %>%
   filter(dmy(ReleaseDate) > dmy("01-10-2018"),
   dmy(ReleaseDate) < dmy("15-02-2019")) %>%
@@ -53,3 +55,4 @@ p2 <- survey_long %>%
 png("tiemseries2.png",width=3200,height=1800,res=300)
 print(p2)
 dev.off()
+

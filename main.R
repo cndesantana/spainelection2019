@@ -63,7 +63,7 @@ dev.off()
 ######
 
 ## the survey needs to present the N
-survey_long_N <- survey_long %>% 
+survey_N <- survey %>% 
   filter(Size > 0)
 
 options(digits=3)

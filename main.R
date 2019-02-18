@@ -71,11 +71,11 @@ options(digits=3)
 #we want to have a time series of this bayesian prediction. 
 #But for now, we are taking only the newest surveys
 wtd.polls <- survey_N %>% 
-  filter(dmy(ReleaseDate) > dmy("01-01-2019")) %>%
-  select(PP, PSOE, Cs, UP, Vox, Others.Blank, Size)
+  filter(dmy(ReleaseDate) > dmy("01-01-2019"))
+wtd.polls <- data.frame(wtd.polls[,c(6:11)]/100, wtd.polls[,5])
 
-wtd.polls[nrow(wtd.polls)+1,1:6] <- colMeans(wtd.polls[,1:6], na.rm=TRUE)  
-wtd.polls[nrow(wtd.polls)+1,7] <-  colSums(wtd.polls[,7], na.rm=TRUE)
+wtd.polls[nrow(wtd.polls)+1,] <- c(colMeans(wtd.polls[,1:6], na.rm=TRUE), sum(wtd.polls[,7], na.rm=TRUE))
+names(wtd.polls)[ncol(wtd.polls)] <- "N"
 ### -------- The following table is now adjusted to our problem
 #               Bolsonaro Haddad  Ciro   Others  Swing   Wasting  N
 #Datafolha      0.360     0.220   0.130  0.200   0.0400  0.0500   19552
@@ -96,12 +96,12 @@ library(MCMCpack)
 
 ############################# draw samples from the posterior
 set.seed(1234)
-MC <- 1000000
+MC <- 10000
 
 ### Using uninformative prior (1,1,1,1)
 
 prob2win = function(row, export=1){
-  p=rdirichlet(100000,
+  p=rdirichlet(10000,
                wtd.polls$N[row] *
                  c(wtd.polls$PP[row] + wtd.polls$Cs[row]+ wtd.polls$Vox[row] , 
                    wtd.polls$PSOE[row]  + wtd.polls$UP[row] + wtd.polls$Others.Blank[row], 

@@ -77,17 +77,16 @@ wtd.polls <- data.frame(wtd.polls[,c(6:11)]/100, wtd.polls[,5])
 wtd.polls[nrow(wtd.polls)+1,] <- c(colMeans(wtd.polls[,1:6], na.rm=TRUE), sum(wtd.polls[,7], na.rm=TRUE))
 names(wtd.polls)[ncol(wtd.polls)] <- "N"
 ### -------- The following table is now adjusted to our problem
-#               Bolsonaro Haddad  Ciro   Others  Swing   Wasting  N
-#Datafolha      0.360     0.220   0.130  0.200   0.0400  0.0500   19552
-#Ibope          0.360     0.220   0.110  0.180   0.0500  0.0800   3010
-#MDA            0.367     0.240   0.099  0.155   0.0600  0.0780   2002
-#Ipespe         0.360     0.220   0.110  0.290   0.0200  0.0000   2000
-#VoxPopuli      0.340     0.270   0.110  0.130   0.0700  0.0800   2000
-#ParanaPesq     0.349     0.218   0.094  0.171   0.0460  0.1200   1080
-#7              0.359     0.225   0.122  0.195   0.0433  0.0561   29644
-#8              0.376     0.235   0.128  0.205   0.0000  0.0561   29644
-#9              0.398     0.249   0.135  0.217   0.0000  0.0000   27980
-
+# PP    PSOE  UP    Cs    Vox    Others.Blank  N
+# 0.231 0.237 0.192 0.158 0.089  0.093         1100
+# 0.179 0.254 0.139 0.170 0.117  0.141         1017
+# 0.240 0.242 0.166 0.187 0.094  0.071         1000
+# 0.230 0.265 0.116 0.171 0.098  0.120         1800
+# 0.182 0.251 0.140 0.179 0.115  0.133         1042
+# 0.238 0.241 0.161 0.196 0.081  0.083         1100
+# 0.183 0.224 0.171 0.185 0.125  0.112         1800
+# 0.192 0.226 0.158 0.188 0.129  0.107         1000
+# 0.209 0.242 0.155 0.179 0.106  0.107         9859
 
 ###########Draw 1 million samples
 
@@ -100,8 +99,8 @@ MC <- 10000
 
 ### Using uninformative prior (1,1,1,1)
 
-prob2win = function(row, export=1){
-  p=rdirichlet(10000,
+prob2win = function(row, export=1, MC){
+  p=rdirichlet(MC,
                wtd.polls$N[row] *
                  c(wtd.polls$PP[row] + wtd.polls$Cs[row]+ wtd.polls$Vox[row] , 
                    wtd.polls$PSOE[row]  + wtd.polls$UP[row] + wtd.polls$Others.Blank[row], 
@@ -116,7 +115,7 @@ prob2win = function(row, export=1){
 
 #####################look at the margins of Bolsonaro over the combined opposition candidates.
 row= nrow(wtd.polls)
-samples = prob2win(row= row, export=0)
+samples = prob2win(row= row, export=0, MC)
 
 combinedOpposition <- (samples[,2])
 frontRunner <- (samples[,1])

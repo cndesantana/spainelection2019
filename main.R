@@ -13,6 +13,7 @@ library(lubridate)
 library(ggplot2)
 library(reshape)
 
+setwd("/home/charles/collaborations/OneMind/spainelection2019")
 survey <- read.csv("./surveys_spain_2019.csv")
 
 #convert survey to LONG format, to work with tidyverse
@@ -61,21 +62,54 @@ dev.off()
 ###### Inspired by http://danielmarcelino.github.io/2018/will-brazil-goes-to-a-instant-runoff-election.html
 ######
 ######
+plotBayesianDistribution <- function(mypolls, MC, sufix){
+  mypolls[nrow(mypolls)+1,] <- c(colMeans(mypolls[,1:6], na.rm=TRUE), sum(mypolls[,7], na.rm=TRUE))
+  names(mypolls)[ncol(mypolls)] <- "N"
+  ############################# draw samples from the posterior
+  set.seed(1234)
+  row= nrow(mypolls)
+  samples = prob2win(mypolls, row= row, export=0, MC)
+  #####################look at the margins of Far-right wing over the combined opposition candidates.
+  combinedOpposition <- (samples[,2])
+  frontRunner <- (samples[,1])
+  margin <- (combinedOpposition - frontRunner)
+  quantile(margin, probs = c(0.025, 0.5, 0.975))
+  png(paste0("odds_farrightwingmajority_",sufix,".png"),width=3200,height=1800,res=300)
+  hist(margin, 
+       col="gray",
+       prob = FALSE, # posterior distribution
+       breaks = "FD", xlab = expression(p[FarRight] > p[Opposition]),
+       main = expression(paste(bold("Posterior Distribution of Elections With "),  p[FarRight] > p[Opposition])));
+  # Bayes estimate (middle 95%)
+  abline(v=mean(margin), col='red', lwd=3, lty=3)
+  dev.off()
+}
+
+### Using uninformative prior (1,1,1,1)
+prob2win = function(polls, row, export=1, MC){
+  p=rdirichlet(MC,
+               polls$N[row] *
+                 c(polls$PP[row] + polls$Cs[row]+ polls$Vox[row] , 
+                   polls$PSOE[row]  + polls$UP[row] + polls$Others.Blank[row])+1)
+  if(export==1){
+    mean(p[,1]<p[,2]) ## No exceeds Yes?
+  } else {
+    return(p)
+  }
+}
 
 ## the survey needs to present the N
 survey_N <- survey %>% 
   filter(Size > 0)
 
-options(digits=3)
+options(digits=5)
 
 #we want to have a time series of this bayesian prediction. 
-#But for now, we are taking only the newest surveys
+#But for now, we are taking only the newest surveys with data for all political parties
 wtd.polls <- survey_N %>% 
-  filter(dmy(ReleaseDate) > dmy("01-01-2019"))
-wtd.polls <- data.frame(wtd.polls[,c(6:11)]/100, wtd.polls[,5])
+  filter(dmy(ReleaseDate) > dmy("12-12-2018")) %>%
+  dplyr::select(Media, ReleaseDate, PP, PSOE, UP, Cs, Vox, Others.Blank, Size)
 
-wtd.polls[nrow(wtd.polls)+1,] <- c(colMeans(wtd.polls[,1:6], na.rm=TRUE), sum(wtd.polls[,7], na.rm=TRUE))
-names(wtd.polls)[ncol(wtd.polls)] <- "N"
 ### -------- The following table is now adjusted to our problem
 # PP    PSOE  UP    Cs    Vox    Others.Blank  N
 # 0.231 0.237 0.192 0.158 0.089  0.093         1100
@@ -93,41 +127,14 @@ names(wtd.polls)[ncol(wtd.polls)] <- "N"
 library(SciencesPo)
 library(MCMCpack)
 
-############################# draw samples from the posterior
-set.seed(1234)
-MC <- 10000
+wtd.polls$Media <- toupper(as.character(wtd.polls$Media))
+allmedia <- unique(wtd.polls$Media)
 
-### Using uninformative prior (1,1,1,1)
-
-prob2win = function(row, export=1, MC){
-  p=rdirichlet(MC,
-               wtd.polls$N[row] *
-                 c(wtd.polls$PP[row] + wtd.polls$Cs[row]+ wtd.polls$Vox[row] , 
-                   wtd.polls$PSOE[row]  + wtd.polls$UP[row] + wtd.polls$Others.Blank[row], 
-                   1 - wtd.polls$PP[row] - wtd.polls$Cs[row] - wtd.polls$Vox[row] - wtd.polls$PSOE[row] - wtd.polls$UP[row] - wtd.polls$Others.Blank[row])
-               +1)
-  if(export==1){
-    mean(p[,1]<p[,2]) ## No exceeds Yes?
-  } else {
-    return(p)
-  }
+for(m in allmedia){
+  mypolls <- wtd.polls[which(wtd.polls$Media == m),-c(1,2)]
+  MC <- 100000
+  plotBayesianDistribution(mypolls, MC, m)
 }
-
-#####################look at the margins of Bolsonaro over the combined opposition candidates.
-row= nrow(wtd.polls)
-samples = prob2win(row= row, export=0, MC)
-
-combinedOpposition <- (samples[,2])
-frontRunner <- (samples[,1])
-
-margin <- (combinedOpposition - frontRunner)
-
-quantile(margin, probs = c(0.025, 0.5, 0.975))
-
-hist(margin, 
-     col="gray",
-     prob = FALSE, # posterior distribution
-     breaks = "FD", xlab = expression(p[FarRight] > p[Opposition]),
-     main = expression(paste(bold("Posterior Distribution of Elections With "),  p[FarRight] > p[Opposition])));
-# Bayes estimate (middle 95%)
-abline(v=mean(margin), col='red', lwd=3, lty=3)
+mypolls <- wtd.polls[,-c(1,2)]
+MC <- 100000
+plotBayesianDistribution(mypolls, MC, "general")

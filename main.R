@@ -68,6 +68,8 @@ survey_N <- survey %>%
 
 options(digits=3)
 
+#we want to have a time series of this bayesian prediction. 
+#But for now, we are taking only the newest surveys
 wtd.polls <- survey_N %>% 
   filter(dmy(ReleaseDate) > dmy("01-01-2019")) %>%
   select(PP, PSOE, Cs, UP, Vox, Others.Blank, Size)

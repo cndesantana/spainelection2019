@@ -13,8 +13,8 @@ library(lubridate)
 library(ggplot2)
 library(reshape)
 
-setwd("/home/charles/collaborations/OneMind/spainelection2019")
-survey <- read.csv("./surveys_spain_2019.csv")
+setwd("/home/charles/GitRepos/armagedon/spainelection2019")
+survey <- read.csv("./surveys_spain_2019.csv", sep=";")
 
 #convert survey to LONG format, to work with tidyverse
 survey_long <- melt(survey, 
@@ -26,8 +26,8 @@ names(survey_long)[6] <- "Party"
 p1 <- survey_long %>%
   ggplot(aes(x = dmy(ReleaseDate), y = as.numeric(value), col = Party), size=3) +
   geom_point(stat="identity") +
-  scale_color_manual(values = c("PP" = "cyan", 
-                                "PSOE" = "red", 
+  scale_color_manual(values = c("PSOE" = "red", 
+                                "PP" = "deepskyblue", 
                                 "UP" = "purple",
                                 "Cs" = "orange",
                                 "Vox" = "lightgreen",
@@ -45,7 +45,7 @@ p2 <- survey_long %>%
   dmy(ReleaseDate) < dmy("15-02-2019")) %>%
   ggplot(aes(x = dmy(ReleaseDate), y = as.numeric(value), col = Party), size=3) +
   geom_point(stat="identity") +
-  scale_color_manual(values = c("PP" = "cyan", 
+  scale_color_manual(values = c("PP" = "deepskyblue", 
                                 "PSOE" = "red", 
                                 "UP" = "purple",
                                 "Cs" = "orange",
